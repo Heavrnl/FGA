@@ -48,37 +48,8 @@ class MainScreenViewModel @Inject constructor(
     fun activityStarted() = oncePerActivityStart.set(true)
 
     // Activity context is needed since we can't show AlertDialog with Application context.
-    fun ensureRootDir(context: Context, pickDirectory: () -> Unit): Boolean {
-        val dirRoot = prefsCore.dirRoot.get()
-
-        if (dirRoot.isBlank()) {
-            AlertDialog.Builder(context)
-                .setTitle(R.string.p_choose_folder_title)
-                .setMessage(R.string.p_choose_folder_message)
-                .setPositiveButton(R.string.p_choose_folder_action) { _, _ ->
-                    pickDirectory()
-                }
-                .setNegativeButton(android.R.string.cancel, null)
-                .show()
-
-            return false
-        }
-
-        val docFile = DocumentFile.fromTreeUri(context, Uri.parse(dirRoot))
-
-        if (docFile?.exists() != true) {
-            AlertDialog.Builder(context)
-                .setTitle(R.string.p_choose_folder_not_exist_title)
-                .setMessage(R.string.p_choose_folder_not_exist_message)
-                .setPositiveButton(R.string.p_choose_folder_action) { _, _ ->
-                    pickDirectory()
-                }
-                .setNegativeButton(android.R.string.cancel, null)
-                .show()
-
-            return false
-        }
-
+    fun ensureRootDir(context: Context): Boolean {
+        // 直接返回 true,因为我们已经在 StorageProvider 中设置了默认目录
         return true
     }
 

@@ -30,7 +30,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -64,10 +63,9 @@ fun MainScreen(
     vm: MainScreenViewModel = viewModel(),
     navigate: (MainScreenDestinations) -> Unit
 ) {
-    var dirPicker: ActivityResultLauncher<Uri?>? by remember { mutableStateOf(null) }
-    val permissionState = rememberPermissionState(permission = POST_NOTIFICATIONS)
+    val toggling = rememberSaveable { mutableStateOf(false) }
 
-    var toggling by rememberSaveable { mutableStateOf(false) }
+    val permissionState = rememberPermissionState(POST_NOTIFICATIONS)
 
     val accessibilityDisabledDialog = FgaDialog()
     accessibilityDisabledDialog.build {
@@ -78,7 +76,7 @@ fun MainScreen(
             okLabel = stringResource(R.string.accessibility_disabled_go_to_settings),
             onSubmit = {
                 navigate(MainScreenDestinations.AccessibilitySettings)
-                toggling = true
+                toggling.value = true
             }
         )
     }
@@ -92,7 +90,7 @@ fun MainScreen(
             okLabel = stringResource(R.string.accessibility_disabled_go_to_settings),
             onSubmit = {
                 navigate(MainScreenDestinations.OverlaySettings)
-                toggling = true
+                toggling.value = true
             }
         )
     }
@@ -103,8 +101,6 @@ fun MainScreen(
         vm.onStartMediaProjectionResult(context, it)
     }
 
-    val pickDirectory: () -> Unit = { dirPicker?.launch(Uri.EMPTY) }
-
     val requestNotifications: () -> Unit = {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
             && !permissionState.status.isGranted
@@ -114,12 +110,11 @@ fun MainScreen(
     }
 
     fun toggleOverlayService() {
-        toggling = false
+        toggling.value = false
 
         toggleOverlayService(
             context = context,
             vm = vm,
-            pickDirectory = pickDirectory,
             requestNotifications = requestNotifications,
             showOverlayDisabled = { overlayDisabledDialog.show() },
             showAccessibilityDisabled = { accessibilityDisabledDialog.show() },
@@ -127,16 +122,8 @@ fun MainScreen(
         )
     }
 
-    dirPicker = rememberLauncherForActivityResult(OpenDocTreePersistable()) {
-        if (it != null) {
-            vm.storageProvider.setRoot(it)
-
-            toggleOverlayService()
-        }
-    }
-
     OnResume {
-        if (toggling || vm.autoStartService) {
+        if (toggling.value || vm.autoStartService) {
             toggleOverlayService()
         }
     }
@@ -147,9 +134,8 @@ fun MainScreen(
     MainScreenContent(
         navigate = {
             if (it is MainScreenDestinations.BattleConfigs) {
-                if (vm.ensureRootDir(context, pickDirectory)) {
-                    navigate(it)
-                }
+                // 移除 ensureRootDir 检查,直接导航
+                navigate(it)
             } else navigate(it)
         },
         overlayServiceStarted = overlayServiceStarted,
@@ -169,7 +155,6 @@ fun MainScreen(
 private fun toggleOverlayService(
     context: Context,
     vm: MainScreenViewModel,
-    pickDirectory: () -> Unit,
     requestNotifications: () -> Unit,
     showOverlayDisabled: () -> Unit,
     showAccessibilityDisabled: () -> Unit,
@@ -185,7 +170,7 @@ private fun toggleOverlayService(
         return
     }
 
-    if (!vm.ensureRootDir(context, pickDirectory)) {
+    if (!vm.ensureRootDir(context)) {
         return
     }
 

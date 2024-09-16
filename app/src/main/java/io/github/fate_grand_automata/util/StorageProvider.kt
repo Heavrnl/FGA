@@ -60,30 +60,11 @@ class StorageProvider @Inject constructor(
     private val persistablePermission =
         Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
 
-    fun setRoot(rootUri: Uri) {
-        prefsCore.dirRoot.get().let { prevDir ->
-            // Don't release permission if user picked the same directory again
-            if (prevDir.isNotBlank() && prevDir != rootUri.toString()) {
-                try {
-                    resolver.releasePersistableUriPermission(Uri.parse(prevDir), persistablePermission)
-                } catch (e: Exception) {
-                    Timber.e(e, "Error on releasing persistable URI")
-                }
-            }
-        }
-
-        prefsCore.dirRoot.set(rootUri.toString())
-        resolver.takePersistableUriPermission(rootUri, persistablePermission)
-
-        dirRoot = DocumentFile.fromTreeUri(context, rootUri)
-    }
-
     init {
-        prefsCore.dirRoot.get().let { dir ->
-            if (dir.isNotBlank()) {
-                dirRoot = DocumentFile.fromTreeUri(context, Uri.parse(dir))
-            }
-        }
+        // 移除原有的代码,改为使用应用的内部存储目录
+        val internalDir = context.filesDir
+        dirRoot = DocumentFile.fromFile(internalDir)
+        prefsCore.dirRoot.set(internalDir.absolutePath)
     }
 
     override val supportImageTempDir: File by lazy {

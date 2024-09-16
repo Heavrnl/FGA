@@ -20,7 +20,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -71,16 +70,15 @@ class PickLanguage(vm: OnboardingViewModel) : OnboardingItem(vm, true) {
 
 @Composable
 fun LocaleDropdownMenu() {
-
     val locales = LanguagePref.availableLanguages()
         .mapKeys { Locale.forLanguageTag(it.key) }
 
     // boilerplate: https://developer.android.com/reference/kotlin/androidx/compose/material/package-summary#ExposedDropdownMenuBox(kotlin.Boolean,kotlin.Function1,androidx.compose.ui.Modifier,kotlin.Function1)
-    var expanded by remember { mutableStateOf(false) }
+    val expanded = remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(
-        expanded = expanded,
+        expanded = expanded.value,
         onExpandedChange = {
-            expanded = !expanded
+            expanded.value = !expanded.value
         }
     ) {
         val selectedLocales = AppCompatDelegate.getApplicationLocales()
@@ -99,21 +97,21 @@ fun LocaleDropdownMenu() {
             onValueChange = { },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(
-                    expanded = expanded
+                    expanded = expanded.value
                 )
             },
             modifier = Modifier.menuAnchor()
         )
         ExposedDropdownMenu(
-            expanded = expanded,
+            expanded = expanded.value,
             onDismissRequest = {
-                expanded = false
+                expanded.value = false
             }
         ) {
             locales.forEach { selectionLocale ->
                 DropdownMenuItem(
                     onClick = {
-                        expanded = false
+                        expanded.value = false
                         // set app locale given the user's selected locale
                         AppCompatDelegate.setApplicationLocales(
                             LocaleListCompat.forLanguageTags(
@@ -130,46 +128,14 @@ fun LocaleDropdownMenu() {
 
 class PickDirectory(vm: OnboardingViewModel) : OnboardingItem(vm) {
     override fun shouldSkip(): Boolean {
-        return vm.prefsCore.dirRoot.get().isNotBlank() && !vm.storageProvider.shouldExtractSupportImages
+        // 由于我们不再允许用户选择目录，我们可以直接跳过这一步
+        return true
     }
 
     @Composable
     override fun UI(onFinished: () -> Unit) {
-        Heading(text = stringResource(R.string.p_choose_folder_title))
-
-        Text(
-            text = stringResource(R.string.p_choose_folder_message),
-            style = MaterialTheme.typography.bodyLarge
-        )
-
-        val context = LocalContext.current
-        val scope = rememberCoroutineScope()
-
-        val dirPicker = rememberLauncherForActivityResult(OpenDocTreePersistable()) {
-            if (it != null) {
-                vm.storageProvider.setRoot(it)
-                scope.launch(Dispatchers.IO) {
-                    if (vm.storageProvider.shouldExtractSupportImages) {
-                        scope.launch(Dispatchers.Main) {
-                            // Toast needs to happen in the UI thread
-                            val msg = context.getString(R.string.support_imgs_extracting)
-                            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
-                        }
-                        SupportImageExtractor(context, vm.storageProvider).extract()
-                    }
-                    onFinished()
-                }
-            }
-        }
-        OutlinedButton(
-            onClick = { dirPicker.launch(Uri.EMPTY) },
-            modifier = Modifier.padding(vertical = 15.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.p_choose_folder_action),
-                style = MaterialTheme.typography.bodyLarge
-            )
-        }
+        // 由于我们不再允许用户选择目录，我们可以直接调用 onFinished
+        onFinished()
     }
 }
 

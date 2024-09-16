@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.fate_grand_automata.R
 import io.github.fate_grand_automata.ui.Heading
@@ -23,25 +24,22 @@ import io.github.fate_grand_automata.util.OpenDocTreePersistable
 
 @Composable
 fun MoreOptionsScreen(
-    vm: MoreOptionsViewModel = viewModel(),
+    vm: MoreOptionsViewModel = hiltViewModel(),
     navigateToFineTune: () -> Unit
 ) {
-    val pickDirectory = rememberLauncherForActivityResult(OpenDocTreePersistable()) {
-        vm.pickedDirectory(it)
-    }
+    // 移除 pickDirectory 相关的代码
 
     MoreOptionsContent(
         vm = vm,
-        goToFineTune = navigateToFineTune,
-        pickDirectory = { pickDirectory.launch(Uri.EMPTY) }
+        goToFineTune = navigateToFineTune
+        // 移除 pickDirectory 参数
     )
 }
 
 @Composable
 private fun MoreOptionsContent(
     vm: MoreOptionsViewModel,
-    goToFineTune: () -> Unit,
-    pickDirectory: () -> Unit
+    goToFineTune: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize()
@@ -72,9 +70,9 @@ private fun MoreOptionsContent(
 
                                     StorageGroup(
                                         directoryName = summary ?: "",
-                                        onPickDirectory = pickDirectory,
                                         extractSupportImages = { vm.performSupportImageExtraction(context) },
                                         extractSummary = extractSummary
+                                        // 移除 onPickDirectory 参数
                                     )
                                 }
                             }

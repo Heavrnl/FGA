@@ -11,15 +11,14 @@ import io.github.fate_grand_automata.ui.prefs.Preference
 @Composable
 fun StorageGroup(
     directoryName: String,
-    onPickDirectory: () -> Unit,
     extractSupportImages: () -> Unit,
     extractSummary: String
 ) {
     Preference(
         title = stringResource(R.string.p_folder),
         summary = directoryName,
-        icon = icon(R.drawable.ic_folder_edit),
-        onClick = onPickDirectory
+        icon = icon(R.drawable.ic_folder_edit)
+        // 移除 onClick 参数
     )
 
     Preference(

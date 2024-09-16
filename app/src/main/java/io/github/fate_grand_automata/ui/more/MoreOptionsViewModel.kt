@@ -43,12 +43,4 @@ class MoreOptionsViewModel @Inject constructor(
 
         extractSummary.value = msg
     }
-
-    fun pickedDirectory(uri: Uri?) {
-        if (uri != null) {
-            storageProvider.setRoot(uri)
-
-            storageSummary.value = storageProvider.rootDirName
-        }
-    }
 }
